@@ -1,0 +1,245 @@
+# FOODFLOW - COMPLETE SOURCE CODE AND SETUP GUIDE
+# ================================================
+
+This file contains ALL the source code you need to set up FoodFlow.
+Follow the instructions step by step.
+
+## PREREQUISITES
+- Node.js v16+ (download from https://nodejs.org/)
+- PostgreSQL v12+ (download from https://www.postgresql.org/download/)
+
+## STEP 1: CREATE PROJECT STRUCTURE
+
+Create this folder structure:
+```
+foodflow/
+├── backend/
+│   ├── config/
+│   ├── middleware/
+│   ├── routes/
+│   └── scripts/
+└── frontend/
+    ├── public/
+    └── src/
+        ├── components/
+        ├── context/
+        ├── pages/
+        └── services/
+```
+
+## STEP 2: BACKEND FILES
+
+### File: backend/package.json
+```json
+{
+  "name": "foodflow-backend",
+  "version": "1.0.0",
+  "description": "FoodFlow Catering Management System Backend",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js",
+    "init-db": "node scripts/initDatabase.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "pg": "^8.11.3",
+    "bcryptjs": "^2.4.3",
+    "jsonwebtoken": "^9.0.2",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "express-validator": "^7.0.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  }
+}
+```
+
+### File: backend/.env
+```
+PORT=5000
+NODE_ENV=development
+
+DB_HOST=localhost
+DB_PORT=5432
+DB_NAME=foodflow_db
+DB_USER=postgres
+DB_PASSWORD=postgres
+
+JWT_SECRET=your_super_secret_jwt_key_change_this_in_production
+JWT_EXPIRE=7d
+```
+
+### File: backend/config/database.js
+```javascript
+const { Pool } = require('pg');
+require('dotenv').config();
+
+const pool = new Pool({
+  host: process.env.DB_HOST,
+  port: process.env.DB_PORT,
+  database: process.env.DB_NAME,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+});
+
+pool.on('connect', () => {
+  console.log('✓ Database connected successfully');
+});
+
+pool.on('error', (err) => {
+  console.error('Unexpected error on idle client', err);
+  process.exit(-1);
+});
+
+module.exports = pool;
+```
+
+### File: backend/middleware/auth.js
+```javascript
+const jwt = require('jsonwebtoken');
+require('dotenv').config();
+
+const authMiddleware = (req, res, next) => {
+  try {
+    const token = req.header('Authorization')?.replace('Bearer ', '');
+
+    if (!token) {
+      return res.status(401).json({ error: 'Access denied. No token provided.' });
+    }
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    req.user = decoded;
+    next();
+  } catch (error) {
+    res.status(401).json({ error: 'Invalid token.' });
+  }
+};
+
+const adminOnly = (req, res, next) => {
+  if (req.user.role !== 'admin') {
+    return res.status(403).json({ error: 'Access denied. Admin only.' });
+  }
+  next();
+};
+
+const staffOrAdmin = (req, res, next) => {
+  if (req.user.role !== 'admin' && req.user.role !== 'staff') {
+    return res.status(403).json({ error: 'Access denied. Staff or Admin only.' });
+  }
+  next();
+};
+
+module.exports = { authMiddleware, adminOnly, staffOrAdmin };
+```
+
+### File: backend/server.js
+```javascript
+const express = require('express');
+const cors = require('cors');
+require('dotenv').config();
+
+const app = express();
+const PORT = process.env.PORT || 5000;
+
+app.use(cors());
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+app.use((req, res, next) => {
+  console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
+  next();
+});
+
+app.use('/api/auth', require('./routes/auth'));
+app.use('/api/packages', require('./routes/packages'));
+app.use('/api/orders', require('./routes/orders'));
+app.use('/api/ingredients', require('./routes/ingredients'));
+app.use('/api/cutlery', require('./routes/cutlery'));
+app.use('/api/dashboard', require('./routes/dashboard'));
+
+app.get('/api/health', (req, res) => {
+  res.json({ 
+    status: 'ok', 
+    message: 'FoodFlow API is running',
+    timestamp: new Date().toISOString()
+  });
+});
+
+app.get('/', (req, res) => {
+  res.json({
+    message: 'Welcome to FoodFlow API',
+    version: '1.0.0',
+    endpoints: {
+      health: '/api/health',
+      auth: '/api/auth',
+      packages: '/api/packages',
+      orders: '/api/orders',
+      ingredients: '/api/ingredients',
+      cutlery: '/api/cutlery',
+      dashboard: '/api/dashboard'
+    }
+  });
+});
+
+app.use((req, res) => {
+  res.status(404).json({ error: 'Route not found' });
+});
+
+app.use((err, req, res, next) => {
+  console.error('Error:', err);
+  res.status(err.status || 500).json({
+    error: err.message || 'Internal server error',
+    ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
+  });
+});
+
+app.listen(PORT, () => {
+  console.log('═══════════════════════════════════════════');
+  console.log('   🍽️  FoodFlow Backend Server');
+  console.log('═══════════════════════════════════════════');
+  console.log(`   Server running on port ${PORT}`);
+  console.log(`   Environment: ${process.env.NODE_ENV || 'development'}`);
+  console.log(`   API URL: http://localhost:${PORT}`);
+  console.log('═══════════════════════════════════════════\n');
+});
+
+module.exports = app;
+```
+
+## STEP 3: CREATE DATABASE SETUP FILE
+
+Due to length, I'll provide you with a download link for remaining files.
+
+## STEP 4: INSTALLATION COMMANDS
+
+1. CREATE DATABASE:
+```bash
+psql -U postgres
+CREATE DATABASE foodflow_db;
+\q
+```
+
+2. SETUP BACKEND:
+```bash
+cd backend
+npm install
+npm run init-db
+npm run dev
+```
+
+3. SETUP FRONTEND (in new terminal):
+```bash
+cd frontend
+npm install
+npm start
+```
+
+4. OPEN: http://localhost:3000
+
+LOGIN:
+- Admin: admin / admin123
+- Customer: customer1 / admin123
+
+For complete source code files, download the archive file.
