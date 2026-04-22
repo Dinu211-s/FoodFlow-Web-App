@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react'; // 1. Added useRef
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext'; 
 import { packageService } from '../services/api';
-import { FiUsers, FiDollarSign, FiShoppingCart } from 'react-icons/fi';
+import { FiUsers, FiShoppingCart } from 'react-icons/fi';
 import './BrowsePackages.css';
 
 const BrowsePackages = () => {
