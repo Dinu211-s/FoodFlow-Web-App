@@ -13,7 +13,6 @@ import OrderDetails from './pages/OrderDetails';
 import ManagePackages from './pages/ManagePackages';
 import ManageInventory from './pages/ManageInventory';
 
-// Protected route wrapper
 const ProtectedRoute = ({ children, requireStaff = false }) => {
   const { user, loading, isStaff } = useAuth();
 
@@ -32,7 +31,6 @@ const ProtectedRoute = ({ children, requireStaff = false }) => {
   return children;
 };
 
-// Public route wrapper
 const PublicRoute = ({ children }) => {
   const { user, loading } = useAuth();
 
@@ -55,8 +53,7 @@ function AppContent() {
       <div className="App">
         <Navbar />
         <Routes>
-          {/* --- 1. PUBLIC ROUTES (Accessible to everyone) --- */}
-          {/* LECTURER UPDATE: Browse is now public */}
+          
           <Route path="/browse" element={<BrowsePackages />} />
           
           <Route 
@@ -76,7 +73,6 @@ function AppContent() {
             } 
           />
 
-          {/* --- 2. HOME REDIRECT LOGIC --- */}
           <Route
             path="/"
             element={
@@ -88,7 +84,7 @@ function AppContent() {
             }
           />
 
-          {/* --- 3. STAFF/ADMIN ROUTES (Protected) --- */}
+
           <Route
             path="/dashboard"
             element={
@@ -130,7 +126,6 @@ function AppContent() {
             }
           />
 
-          {/* --- 4. CUSTOMER PROTECTED ROUTES (Login required to buy) --- */}
           <Route
             path="/checkout"
             element={
@@ -148,7 +143,7 @@ function AppContent() {
             }
           />
 
-          {/* Fallback */}
+          
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>
       </div>
